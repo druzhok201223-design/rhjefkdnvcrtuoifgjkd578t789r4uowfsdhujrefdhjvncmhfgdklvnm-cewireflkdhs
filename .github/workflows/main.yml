@@ -1,10 +1,10 @@
-name: linux project
+name: Chrome Remote Desktop Linux
 
 on:
   workflow_dispatch:
     inputs:
       authcode:
-        description: "Chrome Remote Desktop AUTH code"
+        description: "CRD AUTH CODE (from https://remotedesktop.google.com/headless)"
         required: true
       pin:
         description: "6-digit PIN"
@@ -15,15 +15,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install XFCE + Chrome Remote Desktop
+    - name: Install XFCE + dependencies
       run: |
         set -e
 
         echo "Updating system..."
         sudo apt-get update
 
-        echo "Installing XFCE..."
-        sudo apt-get install -y xfce4 xfce4-terminal xfce4-goodies dbus-x11 wget gdebi-core
+        echo "Installing desktop..."
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+          xfce4 xfce4-goodies xfce4-terminal dbus-x11 wget gdebi-core
 
         echo "Downloading Chrome Remote Desktop..."
         wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
@@ -31,13 +32,12 @@ jobs:
 
         echo "Setting XFCE session..."
         echo "exec startxfce4" > ~/.chrome-remote-desktop-session
-        chmod +x ~/.chrome-remote-desktop-session
 
     - name: Start Chrome Remote Desktop
       run: |
         set -e
 
-        echo "Starting CRD host..."
+        echo "Starting CRD..."
 
         export DISPLAY=:0
 
@@ -45,11 +45,12 @@ jobs:
           --code="${{ github.event.inputs.authcode }}" \
           --redirect-url="https://remotedesktop.google.com/_/oauthredirect" \
           --name=$(hostname) \
-          --pin="${{ github.event.inputs.pin }}"
+          --pin="${{ github.event.inputs.pin }}" \
+          --user-name=$USER
 
-    - name: Keep session alive
+    - name: Keep alive (6 hours)
       run: |
         for ((i=360;i>0;i--)); do
-          echo "Keep alive: $i minutes left"
+          echo "Alive: $i minutes left"
           sleep 60
         done
