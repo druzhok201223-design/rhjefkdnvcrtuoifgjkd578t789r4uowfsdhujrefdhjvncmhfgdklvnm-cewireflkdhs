@@ -1,0 +1,36 @@
+name: Chrome Remote Desktop Linux
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-crd:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Установка, запуск Chrome Remote Desktop и keep-alive
+      run: |
+        #!/bin/bash
+        set -e
+
+        echo "Обновляем пакеты и ставим XFCE + зависимости..."
+        sudo apt-get update
+        sudo apt-get install -y xfce4 xfce4-terminal xfce4-goodies dbus-x11 wget gdebi-core
+
+        echo "Скачиваем и устанавливаем Chrome Remote Desktop..."
+        wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
+        sudo gdebi -n chrome-remote-desktop_current_amd64.deb
+
+        echo "Настраиваем сессию для XFCE..."
+        echo "exec startxfce4" > ~/.chrome-remote-desktop-session
+        chmod +x ~/.chrome-remote-desktop-session
+
+        echo "Запускаем Chrome Remote Desktop..."
+
+        Crd code enter here--pin=237619
+
+        # Чтобы job не завершился, держим alive 6 часов:
+        for ((i=360;i>0;i--)); do
+          echo "Keep alive, minutes left: $i"
+          sleep 60
+        done
